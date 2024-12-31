@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { TextField, Button, Grid, Container, Typography } from "@mui/material";
+import React, { useState } from 'react';
+import { TextField, Button, Grid, Container, Typography } from '@mui/material';
 
 const Calculator = () => {
   const [rows, setRows] = useState();
@@ -8,38 +8,34 @@ const Calculator = () => {
   const [matrixB, setMatrixB] = useState([]);
   const [resultMatrix, setResultMatrix] = useState([]);
 
-  const initializeMatrix = () =>
-    Array.from({ length: rows }, () => Array(cols).fill());
-
   const handleGenerate = () => {
-    setMatrixA(initializeMatrix());
-    setMatrixB(initializeMatrix());
+    const generateMatrix = () => {
+      return Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => 0)
+      );
+    };
+
+    setMatrixA(generateMatrix());
+    setMatrixB(generateMatrix());
     setResultMatrix([]);
   };
 
-  const handleInputChange = (matrixSetter, rowIndex, colIndex, value) => {
-    matrixSetter((prev) => {
-      const updated = prev.map((row, rIdx) =>
-        row.map((cell, cIdx) =>
-          rIdx === rowIndex && cIdx === colIndex ? value : cell
-        )
-      );
-      return updated;
-    });
+  const handleInputChange = (matrixSetter, matrix, rowIndex, colIndex, value) => {
+    const newMatrix = matrix.map((row, rIndex) =>
+      row.map((cell, cIndex) => (rIndex === rowIndex && cIndex === colIndex ? value : cell))
+    );
+    matrixSetter(newMatrix);
   };
 
   const calculateResult = (operation) => {
-    if (!matrixA.length || !matrixB.length) return;
+    if (matrixA.length === 0 || matrixB.length === 0) return;
 
     const newResult = matrixA.map((row, i) =>
-      row.map((_, j) => {
+      row.map((cell, j) => {
         if (operation === "add") return matrixA[i][j] + matrixB[i][j];
         if (operation === "subtract") return matrixA[i][j] - matrixB[i][j];
         if (operation === "multiply") {
-          return matrixA[i].reduce(
-            (sum, _, k) => sum + matrixA[i][k] * matrixB[k][j],
-            0
-          );
+          return matrixA[i].reduce((sum, _, k) => sum + matrixA[i][k] * matrixB[k][j], 0);
         }
         return 0;
       })
@@ -48,22 +44,25 @@ const Calculator = () => {
     setResultMatrix(newResult);
   };
 
-  const renderMatrix = (matrix, matrixSetter) => (
-    <Grid container spacing={1}>
-      {matrix.map((row, rIdx) => (
-        <Grid item xs={12} key={rIdx}>
-          {row.map((cell, cIdx) => (
+  const handleRefresh = () => {
+    setRows(0);
+    setCols(0);
+    setMatrixA([]);
+    setMatrixB([]);
+    setResultMatrix([]);
+  };
+
+  const renderMatrix = (matrix, setMatrix) => (
+    <Grid container spacing={2}>
+      {matrix.map((row, rowIndex) => (
+        <Grid item xs={12} key={`row-${rowIndex}`}>
+          {row.map((cell, colIndex) => (
             <TextField
-              key={`${rIdx}-${cIdx}`}
+              key={`cell-${rowIndex}-${colIndex}`}
               type="number"
               value={cell}
               onChange={(e) =>
-                handleInputChange(
-                  matrixSetter,
-                  rIdx,
-                  cIdx,
-                  Number(e.target.value)
-                )
+                handleInputChange(setMatrix, matrix, rowIndex, colIndex, Number(e.target.value))
               }
               style={{ width: 70, margin: 4 }}
             />
@@ -74,7 +73,7 @@ const Calculator = () => {
   );
 
   return (
-    <Container sx={{ mt: 3 }}>
+    <Container sx={{ marginTop: 3 }}>
       <Typography variant="h4" gutterBottom>
         Matrix Calculator
       </Typography>
@@ -100,27 +99,20 @@ const Calculator = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ mt: 2, justifyContent: "center" }}>
-        <Button variant="contained" color="primary" onClick={handleGenerate}>
-          Generate Matrices
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() => {
-            setRows(0);
-            setCols(0);
-            setMatrixA([]);
-            setMatrixB([]);
-            setResultMatrix([]);
-          }}
-          sx={{ ml: 2 }}
-        >
-          Refresh
-        </Button>
+      <Grid container spacing={2} style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
+        <Grid item>
+          <Button variant="contained" color="primary" onClick={handleGenerate}>
+            Generate Matrices
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button variant="contained" onClick={handleRefresh} sx={{color: 'white', backgroundColor: 'red'}}>
+            Refresh
+          </Button>
+        </Grid>
       </Grid>
 
-      <Grid container spacing={4} sx={{ mt: 2 }}>
+      <Grid container spacing={4} style={{ marginTop: 16 }}>
         <Grid item xs={12} sm={6}>
           <Typography variant="h6">Matrix A</Typography>
           {renderMatrix(matrixA, setMatrixA)}
@@ -131,18 +123,34 @@ const Calculator = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ mt: 2, justifyContent: "center" }}>
-        {["add", "subtract", "multiply"].map((op) => (
+      <Grid container spacing={2} style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
+        <Grid item>
           <Button
-            key={op}
             variant="contained"
             color="secondary"
-            onClick={() => calculateResult(op)}
-            sx={{ mx: 1, my: 1 }}
+            onClick={() => calculateResult("add")}
           >
-            {op.charAt(0).toUpperCase() + op.slice(1)}
+            Add
           </Button>
-        ))}
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => calculateResult("subtract")}
+          >
+            Subtract
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => calculateResult("multiply")}
+          >
+            Multiply
+          </Button>
+        </Grid>
       </Grid>
 
       {resultMatrix.length > 0 && (
